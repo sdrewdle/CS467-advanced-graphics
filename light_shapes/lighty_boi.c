@@ -227,7 +227,6 @@ int main()
   //D3d_view(mat,imat,eye,coi,up);
   rgb[0] = .1; rgb[1] = .6; rgb[2] = .3;
   plot_3d(0.0, 2*M_PI, 0,2*M_PI, f8, mat, rgb);
-
   
   //---------------------------------------------------------
   // sphere2
