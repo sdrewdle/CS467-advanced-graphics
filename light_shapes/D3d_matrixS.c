@@ -77,8 +77,7 @@ void normal(double a[3], double b[3], double c[3], double n[3]) {
   normalize(n,3);
 }
 //-----------------------------------------------------------------------
-
-
+//-----------------------------------------------------------------------
 
 int D3d_print_mat (double a[4][4])
 {
@@ -92,9 +91,6 @@ int D3d_print_mat (double a[4][4])
 
   return 1 ;
 } 
-
-
-
 
 int D3d_copy_mat (double a[4][4], double b[4][4])
 // a = b
@@ -585,4 +581,5 @@ int D3d_view (double view[4][4],  double vinv[4][4],
   double x = up[0], y=up[1];
   h = sqrt(x*x + y*y);
   D3d_cs_rotate_z(view,vinv,y/h,x/h);
+  return 1;
 }
