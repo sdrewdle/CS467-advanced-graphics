@@ -24,7 +24,7 @@ void clear_zbuff() {
 void init() {
   clear_zbuff();
   eye[0] = 0; eye[1] =  0; eye[2] = -10;
-  ls [0] = 3;  ls[1] = 10;  ls[2] = .1;
+  ls [0] = 2;  ls[1] = 2;  ls[2] = -4;
   coi[0] = 0; coi[1] =  0; coi[2] =  0;
 
   up[0] = eye[0];
@@ -296,6 +296,7 @@ int plot_3d (double ulo, double uhi, double vlo, double vhi,
     for(v = vlo; v <= vhi ; v += 0.01) {
       func(u, v, xyz) ;
       D3d_mat_mult_pt(xyz,mat,xyz);
+      D3d_mat_mult_pt(xyz,VIEW,xyz);
       p[0] = (400/tan(half_angle)) * (xyz[0]/xyz[2]) + 400;
       p[1] = (400/tan(half_angle)) * (xyz[1]/xyz[2]) + 400;
 
@@ -335,7 +336,7 @@ int main()
                                      Tn,
                                      Ttypelist,
                                      Tvlist) ;
-  D3d_view(mat,imat,eye,coi,up);
+  //D3d_view(mat,imat,eye,coi,up);
   rgb[0] = .1; rgb[1] = .6; rgb[2] = .3;
   plot_3d(0.0, 2*M_PI, 0,2*M_PI, f8, mat, rgb);
 
@@ -345,12 +346,12 @@ int main()
   D3d_make_identity(mat); D3d_make_identity(imat);
   Tn = 0 ;
 
-  Ttypelist[Tn] = TY ; Tvlist[Tn] =  0 ; Tn++ ; 
+  Ttypelist[Tn] = TY ; Tvlist[Tn] =  -3 ; Tn++ ; 
   D3d_make_movement_sequence_matrix (mat,imat,
                                      Tn,
                                      Ttypelist,
                                      Tvlist) ;
-  D3d_view(mat,imat,eye,coi,up);
+  //D3d_view(mat,imat,eye,coi,up);
   rgb[0] = .5; rgb[1] = .5; rgb[2] = .8;
   plot_3d(0.0, 2*M_PI, 0,2*M_PI, f8, mat, rgb) ;
 
