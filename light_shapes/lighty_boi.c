@@ -1,5 +1,6 @@
 #include <FPT.h>
 #include <D3d_matrix.h>
+#include <parametric_descriptions.h>
 // general display variables:
 double half_angle = 25 *M_PI/180;
 double hither = .1, yon = 10, view_window[6][4];   //not implemented yet
@@ -37,16 +38,7 @@ void init() {
 
 }
 //-----------------------------------------------------------universal tools
-void normalize(double *v, int l) {
-  int i;
-  double length = 0;
-  for(int i=0; i<l;i++) {
-    length += v[i]*v[i];
-  } length = sqrt(length);
-  for(int i=0;i<l;i++) {
-    v[i] /= length;
-  }
-}
+
 
 void scale(double *v, double scale, int l) {
   int i;
@@ -55,130 +47,8 @@ void scale(double *v, double scale, int l) {
   }
 }
 
-double sgn(double v)
-{
-  if (v > 0) return  1.0  ;
-  if (v < 0) return -1.0 ;
-  return 0.0 ;
-}
-
-//-----------------------------------------------------------2d functions
-// circle :   x^2 + y^2 = 1
-int f1 (double u, double xy[2])
-{
-  xy[0] = cos(u) ;  
-  xy[1] = sin(u) ;
-  return 1;
-}
-
-
-// sum4 :   x^4 + y^4 = 1
-int f2 (double u, double xy[2])
-{
-  double c,s ;
-  c = cos(u) ; s = sin(u) ;
-  xy[0] = sgn(c)*sqrt(fabs(c)) ;
-  xy[1] = sgn(s)*sqrt(fabs(s)) ;
-  return 1;
-}
-
-
-// square :   |x| + |y| = 1
-int f3 (double u, double xy[2])
-{
-  double c,s ;
-  c = cos(u) ; s = sin(u) ;
-  xy[0] = sgn(c)*c*c ;
-  xy[1] = sgn(s)*s*s ;
-  return 1;
-}
-
-
-// astroid :   sqrt(|x|) + sqrt(|y|) = 1
-int f4 (double u, double xy[2])
-{
-  double c,s ;
-  c = cos(u) ; s = sin(u) ;
-  xy[0] = sgn(c)*c*c*c*c ;
-  xy[1] = sgn(s)*s*s*s*s ;
-  return 1;
-}
-
-
-// hyperbola :   x^2 - y^2 = 1 
-int f5 (double u, double xy[2])
-// right branch :
-{
-  xy[0] = cosh(u) ;
-  xy[1] = sinh(u) ;
-  return 1;
-}
-
-
-// parabola :   y = x^2
-int f6 (double u, double xy[2])
-{
-  xy[0] = u ;
-  xy[1] = u*u ;
-  return 1;
-}
-
-
-// lemon :   x^2 - (1 - y^2)^3 = 0
-int f7 (double u, double xy[2])
-{
-  double c ;
-  c = cos(u) ;
-  xy[0] = c*c*c ;
-  xy[1] = sin(u) ;
-  return 1;
-}
-
 //-----------------------------------------------------------3d tools
-void vector_to_pts(double x1, double y1, double z1,
-	       double x2, double y2, double z2,
-	       double v[3]){
-  //create a vector from p2 to p1
-  v[2] = z2-z1;
-  v[1] = y2-y1;
-  v[0] = x2-x1;
-}
-double dot(double a[3], double b[3]) {
-  int i;
-  double prod = 0;
-  for(i=0;i<3;i++) {
-    prod += a[i] * b[i];
-  }
-  return prod;
-}
-void vector_to(double a[3], double b[3], double v[3]) {
-  int i;
-  for(i=0;i<3;i++) {v[i] = a[i]-b[i];}
-}
-void orthogonal(double u[3], double v[3], double orthog[3]){
-  double t[3];
-  D3d_x_product(t,u,v);
 
-  orthog[0] = 0 - t[0];
-  orthog[1] = 0 - t[1];
-  orthog[2] = 0 - t[2];
-}
-void normal_pts(double x1, double y1, double z1,
-	    double x2, double y2, double z2,
-	    double x3, double y3, double z3, double n[3]) {
-  double u[3], v[3];
-  vector_to_pts(x1,y1,z1, x2,y2,z2, u);
-  vector_to_pts(x3,y3,z3, x2,y2,z2, v);
-  orthogonal(u,v, n);
-  normalize(n,3);
-}
-void normal(double a[3], double b[3], double c[3], double n[3]) {
-  double u[3], v[3];
-  vector_to(a,b,u);
-  vector_to(c,b,v);
-  orthogonal(u,v,n);
-  normalize(n,3);
-}
 void reflection(double l[3], double n[3], double r[3]) {
   int i;
   for(i=0;i<3;i++) {
@@ -187,45 +57,11 @@ void reflection(double l[3], double n[3], double r[3]) {
   normalize(r,3);
 }
 
-double add(double xyz[3], int i){
-  return view_window[i][0] * xyz[0] +
-    view_window[i][1] * xyz[1] +
-    view_window[i][2] * xyz[2] +
-    view_window[i][3];
-}
-int in_view(double xyz[3]) {
-  double checkp[3] = {0,0,hither+yon/2};
-  
-  double p,check;
-  int i;
-  for (i=0; i<6; i++) { //check edge planes
-    p = add(xyz,i);
-    check = add(checkp,i);
-    if(sgn(p) != sgn (check)) {return 0;}
-    }
-  return 1; //point is in view
-}
+
 
 //-----------------------------------------------------------3d functions
 // sphere :  x^2 + y^2 + z^2 = 0
-int f8 (double u, double v, double xyz[3]) {
-  double sv = sin(v); double su = sin(u);
-  double cv = cos(v); double cu = cos(u);
 
-  xyz[0] = cv*cu;
-  xyz[1] = sv;
-  xyz[2] = cv * su;
-  return 1;
-}
-int f9 (double u, double v, double xyz[3]) {
-  double hcu = cosh(u); double hsu = sinh(u);
-  double cv = cos(v); double sv = sin(v);
-
-  xyz[0] = hcu*cv;
-  xyz[1] = hcu*sv;
-  xyz[2] = hsu;
-  return 1;
-}
 
 void shade(double rgb[3], double sum, double intensity) {
   double ratio;
@@ -450,4 +286,27 @@ void build_view_window() {
     - view_window[5][0] * x
     - view_window[5][1] * y
     - view_window[5][2] * z;
-}**/
+}
+
+
+int in_view(double xyz[3]) {
+double checkp[3] = {0,0,hither+yon/2};
+  
+double p,check;
+int i;
+for (i=0; i<6; i++) { //check edge planes
+p = add(xyz,i);
+check = add(checkp,i);
+if(sgn(p) != sgn (check)) {return 0;}
+}
+return 1; //point is in view
+}
+
+
+double add(double xyz[3], int i){
+return view_window[i][0] * xyz[0] +
+view_window[i][1] * xyz[1] +
+view_window[i][2] * xyz[2] +
+view_window[i][3];
+}
+**/

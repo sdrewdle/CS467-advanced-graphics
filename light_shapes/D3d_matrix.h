@@ -39,8 +39,26 @@ instead of (x',y',z',1) = (x,y,z,1) * M
 #define NZ 11
 
 
+//-----------------------------------------------------------------------
+// my functions
+//-----------------------------------------------------------------------
+void normalize(double *v, int l);
 
+void vector_to_pts(double x1, double y1, double z1,
+                   double x2, double y2, double z2,double v[3]);
 
+double dot(double a[3], double b[3]);
+
+void vector_to(double a[3], double b[3], double v[3]);
+
+void orthogonal(double u[3], double v[3], double orthog[3]);
+
+void normal_pts(double x1, double y1, double z1,
+                double x2, double y2, double z2,
+                double x3, double y3, double z3, double n[3]);
+
+void normal(double a[3], double b[3], double c[3], double n[3]);
+//-----------------------------------------------------------------------
 
 int D3d_print_mat (double a[4][4]) ;
 
