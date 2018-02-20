@@ -11,6 +11,7 @@ int main()
   int idA, idB ;
   double red,grn,blu ;
   int x,y,e ;
+  
 
   w = 600 ; h = 300 ; 
 
