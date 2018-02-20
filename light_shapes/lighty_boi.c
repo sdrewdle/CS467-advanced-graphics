@@ -1,7 +1,7 @@
 #include <FPT.h>
 #include <D3d_matrix.h>
 // general display variables:
-double half_angle = 35 *M_PI/180;
+double half_angle = 25 *M_PI/180;
 double hither = .1, yon = 10, view_window[6][4];   //not implemented yet
 #define WW  800
 #define WH  800
@@ -400,7 +400,7 @@ int main()
                                      Tvlist);
   rgb[0] = 0; rgb[1] = 1; rgb[2] = 1;
   double v = M_PI/2 - 0.65;
-  plot_3d_with_inc(-v, v, 0, 2*M_PI, f9, mat, rgb,0.005,0.01);
+  plot_3d_with_inc(-v, v, 0, 2*M_PI, f9, mat, rgb,0.002,0.002);
 
   G_wait_key();
   return 1;
