@@ -23,7 +23,7 @@ void clear_zbuff() {
 
 void init() {
   clear_zbuff();
-  eye[0] = 0; eye[1] =  0; eye[2] = -10;
+  eye[0] = 0; eye[1] =  2.5; eye[2] = -10;
   ls [0] = 2;  ls[1] = 2;  ls[2] = -4;
   coi[0] = 0; coi[1] =  0; coi[2] =  0;
 
@@ -68,6 +68,7 @@ int f1 (double u, double xy[2])
 {
   xy[0] = cos(u) ;  
   xy[1] = sin(u) ;
+  return 1;
 }
 
 
@@ -78,6 +79,7 @@ int f2 (double u, double xy[2])
   c = cos(u) ; s = sin(u) ;
   xy[0] = sgn(c)*sqrt(fabs(c)) ;
   xy[1] = sgn(s)*sqrt(fabs(s)) ;
+  return 1;
 }
 
 
@@ -88,6 +90,7 @@ int f3 (double u, double xy[2])
   c = cos(u) ; s = sin(u) ;
   xy[0] = sgn(c)*c*c ;
   xy[1] = sgn(s)*s*s ;
+  return 1;
 }
 
 
@@ -98,6 +101,7 @@ int f4 (double u, double xy[2])
   c = cos(u) ; s = sin(u) ;
   xy[0] = sgn(c)*c*c*c*c ;
   xy[1] = sgn(s)*s*s*s*s ;
+  return 1;
 }
 
 
@@ -107,6 +111,7 @@ int f5 (double u, double xy[2])
 {
   xy[0] = cosh(u) ;
   xy[1] = sinh(u) ;
+  return 1;
 }
 
 
@@ -115,6 +120,7 @@ int f6 (double u, double xy[2])
 {
   xy[0] = u ;
   xy[1] = u*u ;
+  return 1;
 }
 
 
@@ -125,6 +131,7 @@ int f7 (double u, double xy[2])
   c = cos(u) ;
   xy[0] = c*c*c ;
   xy[1] = sin(u) ;
+  return 1;
 }
 
 //-----------------------------------------------------------3d tools
@@ -208,6 +215,16 @@ int f8 (double u, double v, double xyz[3]) {
   xyz[0] = cv*cu;
   xyz[1] = sv;
   xyz[2] = cv * su;
+  return 1;
+}
+int f9 (double u, double v, double xyz[3]) {
+  double hcu = cosh(u); double hsu = sinh(u);
+  double cv = cos(v); double sv = sin(v);
+
+  xyz[0] = hcu*cv;
+  xyz[1] = hcu*sv;
+  xyz[2] = hsu;
+  return 1;
 }
 
 void shade(double rgb[3], double sum, double intensity) {
@@ -284,21 +301,22 @@ void light(double u, double v, double mat[4][4],
   shade(rgb,AMBIENT+DIFFUSE_MAX, AMBIENT + diffuse + specular);
 }
 
-int plot_3d (double ulo, double uhi, double vlo, double vhi,
+int plot_3d_with_inc (double ulo, double uhi, double vlo, double vhi,
 	     int (*func)(double u, double v, double xyz[3]),
-	     double mat[4][4], double rgb[3]
+                      double mat[4][4], double rgb[3],
+                      double incU, double incV
 	 )
 {
   double u,v ;
   int p[2];
   double xyz[3] = {0,0,0};
-  for (u = ulo ; u <= uhi ; u += 0.01) {
-    for(v = vlo; v <= vhi ; v += 0.01) {
+  for (u = ulo ; u <= uhi ; u += incU) {
+    for(v = vlo; v <= vhi ; v += incV) {
       func(u, v, xyz) ;
       D3d_mat_mult_pt(xyz,mat,xyz);
       D3d_mat_mult_pt(xyz,VIEW,xyz);
-      p[0] = (400/tan(half_angle)) * (xyz[0]/xyz[2]) + 400;
-      p[1] = (400/tan(half_angle)) * (xyz[1]/xyz[2]) + 400;
+      p[0] = (400/tan(half_angle)) * (xyz[0]/xyz[2]) + WW/2;
+      p[1] = (400/tan(half_angle)) * (xyz[1]/xyz[2]) + WH/2;
 
       light(u,v,mat,rgb,func);
       if( (p[0] < 800 && p[0] >-1) &&
@@ -312,6 +330,15 @@ int plot_3d (double ulo, double uhi, double vlo, double vhi,
   }
   return 1;
 }
+int plot_3d (double ulo, double uhi, double vlo, double vhi,
+             int (*func)(double u, double v, double xyz[3]),
+             double mat[4][4], double rgb[3]
+             )
+{
+  return plot_3d_with_inc (ulo,uhi,vlo,vhi,
+                           func, mat, rgb,
+                           0.01, 0.01);
+}
 
 int main()
 {
@@ -321,7 +348,7 @@ int main()
 
   init();
 
-  G_init_graphics(800,800) ;
+  G_init_graphics(WW,WH) ;
   G_rgb(0,0,0) ;
   G_clear() ;
 
@@ -357,9 +384,26 @@ int main()
 
   G_rgb(1,1,0);
   G_fill_circle(WW/2,WH/2,4);
-  G_wait_key() ;
-  
 
+  //--------------------------------------------------------
+  // hyperbaloid
+  D3d_make_identity(mat); D3d_make_identity(imat);
+
+  Tn=0;
+  Ttypelist[Tn] = RX; Tvlist[Tn] = 90; Tn++;
+  Ttypelist[Tn] = SY; Tvlist[Tn] = 2;  Tn++;
+  Ttypelist[Tn] = SX; Tvlist[Tn] = 0.7; Tn++;
+  Ttypelist[Tn] = SZ; Tvlist[Tn] = 0.7; Tn++;
+  D3d_make_movement_sequence_matrix (mat, imat,
+                                     Tn,
+                                     Ttypelist,
+                                     Tvlist);
+  rgb[0] = 0; rgb[1] = 1; rgb[2] = 1;
+  double v = M_PI/2 - 0.65;
+  plot_3d_with_inc(-v, v, 0, 2*M_PI, f9, mat, rgb,0.005,0.01);
+
+  G_wait_key();
+  return 1;
 }
 
 
