@@ -1,16 +1,41 @@
 #include <FPT.h>
 #include <D3d_matrix.h>
-double half_angle = 30 *M_PI/180;
-double hither = .1, yon = 10, view_window[6][4];
-double ambient = 0.2, diffuse_max = 0.5, spec_pow = 30;
-double zbuff[800][800];
+// general display variables:
+double half_angle = 35 *M_PI/180;
+double hither = .1, yon = 10, view_window[6][4];   //not implemented yet
+#define WW  800
+#define WH  800
+
+// lighting and viewpoint variables
+#define AMBIENT 0.2
+#define DIFFUSE_MAX 0.5
+#define SPEC_POW 30
+
+double zbuff[WW][WH];
 double eye[3], ls[3];
+double coi[3], up[3];
+double VIEW[4][4];
 
 void clear_zbuff() {
   int i,j;
   for(int i=0;i<800;i++){for(int j=0;j<800;j++) {zbuff[i][j]=pow(10,50);}}
 }
 
+void init() {
+  clear_zbuff();
+  eye[0] = 0; eye[1] =  0; eye[2] = -10;
+  ls [0] = 3;  ls[1] = 10;  ls[2] = .1;
+  coi[0] = 0; coi[1] =  0; coi[2] =  0;
+
+  up[0] = eye[0];
+  up[1] = eye[1] + 1;
+  up[2] = eye[2];
+
+  D3d_make_identity(VIEW);
+  double _[4][4];
+  D3d_view(VIEW,_,eye,coi,up);
+
+}
 //-----------------------------------------------------------universal tools
 void normalize(double *v, int l) {
   int i;
@@ -154,47 +179,6 @@ void reflection(double l[3], double n[3], double r[3]) {
   }
   normalize(r,3);
 }
-void build_view_window() {
-  int i;
-  double x=0,y,z, norm[3];
-  //hither plane
-  view_window[0][0] = 0; view_window[0][1] = 0;
-  view_window[0][2] = hither+1;
-  view_window[0][3] = -view_window[0][2] * hither;
-
-  //yonder plane
-  view_window[1][0] = 0; view_window[1][1] = 0;
-  view_window[1][2] = yon+1;
-  view_window[1][3] = -view_window[1][2] * yon;
-
-  y=tan(half_angle)/hither; z = hither;
-  normal_pts(1,0,0, 0,0,0, x,y,z, view_window[2]);
-  view_window[2][3] = 
-    - view_window[2][0] * x
-    - view_window[2][1] * y
-    - view_window[2][2] * z;
-  
-  y = -y;
-  normal_pts(1,0,0, 0,0,0, x,y,z, view_window[3]);
-  view_window[3][3] = 
-    - view_window[3][0] * x
-    - view_window[3][1] * y
-    - view_window[3][2] * z;
-
-  x = -y; y=0;
-  normal_pts(0,1,0, 0,0,0, x,y,z, view_window[4]);
-  view_window[4][3] = 
-    - view_window[4][0] * x
-    - view_window[4][1] * y
-    - view_window[4][2] * z;
-
-  x = -x;
-  normal_pts(0,1,0, 0,0,0, x,y,z, view_window[5]);
-  view_window[5][3] = 
-    - view_window[5][0] * x
-    - view_window[5][1] * y
-    - view_window[5][2] * z;
-}
 
 double add(double xyz[3], int i){
   return view_window[i][0] * xyz[0] +
@@ -273,7 +257,6 @@ void light(double u, double v, double mat[4][4],
     for (i=0;i<3;i++) {norm[i] = -norm[i];}
   }
   //--------------------------------------------------calculate the intensity
-  //constants above: diffuse_max, spec_pow, ambient
   double specular, diffuse;
   
   double r[3];
@@ -288,17 +271,17 @@ void light(double u, double v, double mat[4][4],
   if(edr <= 0) {
     specular = 0;
   } else {
-    specular = (1-ambient-diffuse_max) * pow(edr, spec_pow);
+    specular = (1-AMBIENT-DIFFUSE_MAX) * pow(edr, SPEC_POW);
   }
 
   if(ndl <= 0) {
     diffuse = 0;
   } else {
-    diffuse = diffuse_max * ndl;
+    diffuse = DIFFUSE_MAX * ndl;
   }
 
   //calculate correct rgb value and call G_rgb to set
-  shade(rgb,ambient+diffuse_max, ambient + diffuse + specular);
+  shade(rgb,AMBIENT+DIFFUSE_MAX, AMBIENT + diffuse + specular);
 }
 
 int plot_3d (double ulo, double uhi, double vlo, double vhi,
@@ -309,8 +292,8 @@ int plot_3d (double ulo, double uhi, double vlo, double vhi,
   double u,v ;
   int p[2];
   double xyz[3] = {0,0,0};
-  for (u = ulo ; u <= uhi ; u += 0.005) {
-    for(v = vlo; v <= vhi ; v += 0.005) {
+  for (u = ulo ; u <= uhi ; u += 0.01) {
+    for(v = vlo; v <= vhi ; v += 0.01) {
       func(u, v, xyz) ;
       D3d_mat_mult_pt(xyz,mat,xyz);
       p[0] = (400/tan(half_angle)) * (xyz[0]/xyz[2]) + 400;
@@ -331,48 +314,48 @@ int plot_3d (double ulo, double uhi, double vlo, double vhi,
 
 int main()
 {
-  eye[0] = 0; eye[1] = 0; eye[2] = 0;
-  ls[0] = 3; ls[1] = 10; ls[2] = .1;
-  clear_zbuff();
   int i, Tn, Ttypelist[100] ;
   double Tvlist[100] ;
   double mat[4][4],imat[4][4] ;
+
+  init();
 
   G_init_graphics(800,800) ;
   G_rgb(0,0,0) ;
   G_clear() ;
 
-  //build view window to draw in 3d
-  //build_view_window();
-
   //---------------------------------------------------------
-  // spheres
+  // sphere1
   double rgb[3];
 
   Tn = 0 ; // number of transformations
-  Ttypelist[Tn] = TX ; Tvlist[Tn] =  0 ; Tn++ ; //2.5
-  Ttypelist[Tn] = TY ; Tvlist[Tn] =  0.0 ; Tn++ ; //.5
-  Ttypelist[Tn] = TZ ; Tvlist[Tn] =  10 ; Tn++ ; //7
-  //Ttypelist[Tn] = SZ ; Tvlist[Tn] =    3 ; Tn ++;
+  Ttypelist[Tn] = TY ; Tvlist[Tn] =  3 ; Tn++ ;
+ 
   D3d_make_movement_sequence_matrix (mat,imat,
                                      Tn,
                                      Ttypelist,
                                      Tvlist) ;
+  D3d_view(mat,imat,eye,coi,up);
   rgb[0] = .1; rgb[1] = .6; rgb[2] = .3;
+  plot_3d(0.0, 2*M_PI, 0,2*M_PI, f8, mat, rgb);
+
+  
+  //---------------------------------------------------------
+  // sphere2
+  D3d_make_identity(mat); D3d_make_identity(imat);
+  Tn = 0 ;
+
+  Ttypelist[Tn] = TY ; Tvlist[Tn] =  0 ; Tn++ ; 
+  D3d_make_movement_sequence_matrix (mat,imat,
+                                     Tn,
+                                     Ttypelist,
+                                     Tvlist) ;
+  D3d_view(mat,imat,eye,coi,up);
+  rgb[0] = .5; rgb[1] = .5; rgb[2] = .8;
   plot_3d(0.0, 2*M_PI, 0,2*M_PI, f8, mat, rgb) ;
 
-  Tn = 0 ; // number of transformations
-  Ttypelist[Tn] = TX ; Tvlist[Tn] =  1 ; Tn++ ; //2.5
-  Ttypelist[Tn] = TY ; Tvlist[Tn] =  0 ; Tn++ ; //.5
-  Ttypelist[Tn] = TZ ; Tvlist[Tn] =  6 ; Tn++ ; //7
-  //Ttypelist[Tn] = SZ ; Tvlist[Tn] =    3 ; Tn ++;
-  D3d_make_movement_sequence_matrix (mat,imat,
-                                     Tn,
-                                     Ttypelist,
-                                     Tvlist) ;
-  rgb[0] = 1; rgb[1] = 1; rgb[2] = 0;
-  //plot_3d(0.0, 2*M_PI, 0,2*M_PI, f8, mat, rgb) ;
-  
+  G_rgb(1,1,0);
+  G_fill_circle(WW/2,WH/2,4);
   G_wait_key() ;
   
 
@@ -380,3 +363,46 @@ int main()
 
 
 
+/**
+
+void build_view_window() {
+  int i;
+  double x=0,y,z, norm[3];
+  //hither plane
+  view_window[0][0] = 0; view_window[0][1] = 0;
+  view_window[0][2] = hither+1;
+  view_window[0][3] = -view_window[0][2] * hither;
+
+  //yonder plane
+  view_window[1][0] = 0; view_window[1][1] = 0;
+  view_window[1][2] = yon+1;
+  view_window[1][3] = -view_window[1][2] * yon;
+
+  y=tan(half_angle)/hither; z = hither;
+  normal_pts(1,0,0, 0,0,0, x,y,z, view_window[2]);
+  view_window[2][3] = 
+    - view_window[2][0] * x
+    - view_window[2][1] * y
+    - view_window[2][2] * z;
+  
+  y = -y;
+  normal_pts(1,0,0, 0,0,0, x,y,z, view_window[3]);
+  view_window[3][3] = 
+    - view_window[3][0] * x
+    - view_window[3][1] * y
+    - view_window[3][2] * z;
+
+  x = -y; y=0;
+  normal_pts(0,1,0, 0,0,0, x,y,z, view_window[4]);
+  view_window[4][3] = 
+    - view_window[4][0] * x
+    - view_window[4][1] * y
+    - view_window[4][2] * z;
+
+  x = -x;
+  normal_pts(0,1,0, 0,0,0, x,y,z, view_window[5]);
+  view_window[5][3] = 
+    - view_window[5][0] * x
+    - view_window[5][1] * y
+    - view_window[5][2] * z;
+}**/

@@ -505,7 +505,7 @@ int D3d_view (double view[4][4],  double vinv[4][4],
 // of the eye, the center of interest, and an up point.
 // return 1 if successful, 0 otherwise.
   
-  D3d_make_identity(view); D3d_make_identity(vinv);
+  //D3d_make_identity(view); D3d_make_identity(vinv);
   
   D3d_translate(view, vinv, -eye[0], -eye[1], -eye[2]);
   D3d_mat_mult_pt(coi,view,coi);
@@ -520,6 +520,6 @@ int D3d_view (double view[4][4],  double vinv[4][4],
   D3d_mat_mult_pt(up,view,up);
 
   double x = up[0], y=up[1];
-  h=sqrt(x*x + y*y);
+  h = sqrt(x*x + y*y);
   D3d_cs_rotate_z(view,vinv,y/h,x/h);
 }
