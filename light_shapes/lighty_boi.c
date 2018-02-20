@@ -1,13 +1,13 @@
 #include <FPT.h>
 #include <D3d_matrix.h>
 #include <parametric_descriptions.h>
-// general display variables:
+//--------------------------------------------general display variables:
 double half_angle = 25 *M_PI/180;
 double hither = .1, yon = 10, view_window[6][4];   //not implemented yet
 #define WW  800
 #define WH  800
 
-// lighting and viewpoint variables
+//--------------------------------------lighting and viewpoint variables
 #define AMBIENT 0.2
 #define DIFFUSE_MAX 0.5
 #define SPEC_POW 30
@@ -37,9 +37,8 @@ void init() {
   D3d_view(VIEW,_,eye,coi,up);
 
 }
-//-----------------------------------------------------------universal tools
 
-
+// scale: used for translating 3d --> 2d screen
 void scale(double *v, double scale, int l) {
   int i;
   for(i=0;i<l;i++) {
@@ -47,8 +46,8 @@ void scale(double *v, double scale, int l) {
   }
 }
 
-//-----------------------------------------------------------3d tools
-
+// reflection over a normal vector
+// guaranteed |r| = 1
 void reflection(double l[3], double n[3], double r[3]) {
   int i;
   for(i=0;i<3;i++) {
@@ -56,12 +55,6 @@ void reflection(double l[3], double n[3], double r[3]) {
   }
   normalize(r,3);
 }
-
-
-
-//-----------------------------------------------------------3d functions
-// sphere :  x^2 + y^2 + z^2 = 0
-
 
 void shade(double rgb[3], double sum, double intensity) {
   double ratio;
@@ -77,6 +70,37 @@ void shade(double rgb[3], double sum, double intensity) {
     G_rgb((1-ratio)*r + ratio,
 	  (1-ratio)*g + ratio,
 	  (1-ratio)*b + ratio);
+  }
+}
+
+void checker(double rgb1[3], double rgb2[3],
+             double sum, double intensity, double u, double v)
+{
+  double ratio, r, g, b;
+  if((int)(u*100/20) % 2 == 0) {
+    if((int)(v*100/20) % 2 == 0){
+      r = rgb1[0]; g = rgb1[1]; b = rgb1[2];
+    } else {
+      r = rgb2[0]; g = rgb2[1]; b = rgb2[2];
+    }
+  } else {
+    if((int)(v*100/20) % 2 == 1){
+      r = rgb1[0]; g = rgb1[1]; b = rgb1[2];
+    } else {
+      r = rgb2[0]; g = rgb2[1]; b = rgb2[2];
+    }
+  }
+
+  if (intensity <= sum) {
+    ratio = intensity/sum;
+    G_rgb(r * ratio,
+          g * ratio,
+          b * ratio);
+  } else {
+    ratio = (intensity-sum)/(1-sum);
+    G_rgb((1-ratio)*r + ratio,
+          (1-ratio)*g + ratio,
+          (1-ratio)*b + ratio);
   }
 }
 
@@ -134,7 +158,8 @@ void light(double u, double v, double mat[4][4],
   }
 
   //calculate correct rgb value and call G_rgb to set
-  shade(rgb,AMBIENT+DIFFUSE_MAX, AMBIENT + diffuse + specular);
+  double black[3] = {0,0,0};
+  checker(rgb,black,AMBIENT+DIFFUSE_MAX, AMBIENT + diffuse + specular, u, v);
 }
 
 int plot_3d_with_inc (double ulo, double uhi, double vlo, double vhi,
@@ -218,9 +243,6 @@ int main()
   rgb[0] = .5; rgb[1] = .5; rgb[2] = .8;
   plot_3d(0.0, 2*M_PI, 0,2*M_PI, f8, mat, rgb) ;
 
-  G_rgb(1,1,0);
-  G_fill_circle(WW/2,WH/2,4);
-
   //--------------------------------------------------------
   // hyperbaloid
   D3d_make_identity(mat); D3d_make_identity(imat);
@@ -238,75 +260,9 @@ int main()
   double v = M_PI/2 - 0.65;
   plot_3d_with_inc(-v, v, 0, 2*M_PI, f9, mat, rgb,0.002,0.002);
 
+
+  G_rgb(1,1,0);
+  G_fill_circle(WW/2,WH/2,4);
   G_wait_key();
   return 1;
 }
-
-
-
-/**
-
-void build_view_window() {
-  int i;
-  double x=0,y,z, norm[3];
-  //hither plane
-  view_window[0][0] = 0; view_window[0][1] = 0;
-  view_window[0][2] = hither+1;
-  view_window[0][3] = -view_window[0][2] * hither;
-
-  //yonder plane
-  view_window[1][0] = 0; view_window[1][1] = 0;
-  view_window[1][2] = yon+1;
-  view_window[1][3] = -view_window[1][2] * yon;
-
-  y=tan(half_angle)/hither; z = hither;
-  normal_pts(1,0,0, 0,0,0, x,y,z, view_window[2]);
-  view_window[2][3] = 
-    - view_window[2][0] * x
-    - view_window[2][1] * y
-    - view_window[2][2] * z;
-  
-  y = -y;
-  normal_pts(1,0,0, 0,0,0, x,y,z, view_window[3]);
-  view_window[3][3] = 
-    - view_window[3][0] * x
-    - view_window[3][1] * y
-    - view_window[3][2] * z;
-
-  x = -y; y=0;
-  normal_pts(0,1,0, 0,0,0, x,y,z, view_window[4]);
-  view_window[4][3] = 
-    - view_window[4][0] * x
-    - view_window[4][1] * y
-    - view_window[4][2] * z;
-
-  x = -x;
-  normal_pts(0,1,0, 0,0,0, x,y,z, view_window[5]);
-  view_window[5][3] = 
-    - view_window[5][0] * x
-    - view_window[5][1] * y
-    - view_window[5][2] * z;
-}
-
-
-int in_view(double xyz[3]) {
-double checkp[3] = {0,0,hither+yon/2};
-  
-double p,check;
-int i;
-for (i=0; i<6; i++) { //check edge planes
-p = add(xyz,i);
-check = add(checkp,i);
-if(sgn(p) != sgn (check)) {return 0;}
-}
-return 1; //point is in view
-}
-
-
-double add(double xyz[3], int i){
-return view_window[i][0] * xyz[0] +
-view_window[i][1] * xyz[1] +
-view_window[i][2] * xyz[2] +
-view_window[i][3];
-}
-**/
