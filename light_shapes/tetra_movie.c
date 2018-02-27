@@ -26,7 +26,7 @@ void clear_zbuff() {
 void init() {
   clear_zbuff();
   eye[0] = 0; eye[1] =  2.5; eye[2] = -10;
-  ls [0] = 2;  ls[1] = 2;  ls[2] = -4;
+  ls [0] = 2;  ls[1] = 20;  ls[2] = 20;
   coi[0] = 0; coi[1] =  0; coi[2] =  0;
 
   up[0] = eye[0];
@@ -218,6 +218,7 @@ int main()
   double u;
   for(u=0;u<2*M_PI;u+=M_PI/50){
 
+    clear_zbuff();
     map = create_new_xwd_map(WW,WH);
 
     sprintf(filename,"%s%04d.xwd", base, i);
@@ -226,9 +227,13 @@ int main()
 
     //---------------------------------------------------------
     // view moves along circular path in x,z plane y=2.5
-    D3d_make_identity(VIEW);
     eye[0] = 10*cos(u);
     eye[2] = 10*sin(u);
+    up[0] = eye[0];
+    up[1] = eye[1] + 1;
+    up[2] = eye[2];
+    coi[0] = 0; coi[1] = 0; coi[2] = 0;
+    D3d_make_identity(VIEW);
     D3d_view(VIEW,imat,eye,coi,up);
     //---------------------------------------------------------
     // sphere1
@@ -243,7 +248,7 @@ int main()
                                        Tvlist) ;
     //D3d_view(mat,imat,eye,coi,up);
     rgb[0] = .1; rgb[1] = .6; rgb[2] = .3;
-    plot_3d_with_inc(map,0.0, 2*M_PI, 0,2*M_PI, sphere, mat, rgb,0.05,0.05);
+    plot_3d_with_inc(map,0.0, 2*M_PI, 0,2*M_PI, sphere, mat, rgb,0.005,0.005);
   
     //---------------------------------------------------------
     // sphere2
@@ -257,7 +262,7 @@ int main()
                                        Tvlist) ;
     //D3d_view(mat,imat,eye,coi,up);
     rgb[0] = .5; rgb[1] = .5; rgb[2] = .8;
-    plot_3d_with_inc(map, 0.0, 2*M_PI, 0,2*M_PI, sphere, mat, rgb,0.05,0.05) ;
+    plot_3d_with_inc(map, 0.0, 2*M_PI, 0,2*M_PI, sphere, mat, rgb,0.005,0.005) ;
 
     //--------------------------------------------------------
     // hyperboloid
@@ -272,10 +277,9 @@ int main()
                                        Tvlist);
     rgb[0] = 0; rgb[1] = 1; rgb[2] = 1;
     double v = M_PI/2 - 0.65;
-    plot_3d_with_inc(map, -v, v, 0, 2*M_PI, hyperboloid, mat, rgb,0.02,0.02);
+    plot_3d_with_inc(map, -v, v, 0, 2*M_PI, hyperboloid, mat, rgb,0.002,0.002);
 
     xwd_map_to_named_xwd_file(map, filename);
-    if(i>10){break;}
   }
   return 1;
 }

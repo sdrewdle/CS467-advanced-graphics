@@ -40,4 +40,9 @@ int sphere(double u, double v, double xyz[3]);
 int hyperboloid(double u, double v, double xyz[3]);
 // wrapper for f9
 
+int torus(double u, double v, double xyz[3]); //might probs just give full donut, delete first two params
+// x = cos(u)
+// y = cos(v) * ( sin(u) + 4) <-- 4 is arbitrary, this is the central r
+// z = sin(v) * ( sin(u) + 4)
+
 #endif
