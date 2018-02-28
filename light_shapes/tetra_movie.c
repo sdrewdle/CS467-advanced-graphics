@@ -215,7 +215,7 @@ int main()
 
   init();
 
-  double u;
+  double u, v;
   for(u=0;u<2*M_PI;u+=M_PI/50){
 
     clear_zbuff();
@@ -240,13 +240,12 @@ int main()
     double rgb[3];
     
     Tn = 0 ; // number of transformations
-    Ttypelist[Tn] = TY ; Tvlist[Tn] =  3 ; Tn++ ;
- 
+    Ttypelist[Tn] = TX ; Tvlist[Tn] =  4 ; Tn++ ;
+
     D3d_make_movement_sequence_matrix (mat,imat,
                                        Tn,
                                        Ttypelist,
                                        Tvlist) ;
-    //D3d_view(mat,imat,eye,coi,up);
     rgb[0] = .1; rgb[1] = .6; rgb[2] = .3;
     plot_3d_with_inc(map,0.0, 2*M_PI, 0,2*M_PI, sphere, mat, rgb,0.005,0.005);
   
@@ -255,15 +254,42 @@ int main()
     D3d_make_identity(mat); D3d_make_identity(imat);
     Tn = 0 ;
 
-    Ttypelist[Tn] = TY ; Tvlist[Tn] =  -3 ; Tn++ ; 
+    Ttypelist[Tn] = TX ; Tvlist[Tn] =      -2 ; Tn++ ;
+    Ttypelist[Tn] = TZ ; Tvlist[Tn] = 2*sqrt(3) ; Tn++ ;
     D3d_make_movement_sequence_matrix (mat,imat,
                                        Tn,
                                        Ttypelist,
                                        Tvlist) ;
-    //D3d_view(mat,imat,eye,coi,up);
     rgb[0] = .5; rgb[1] = .5; rgb[2] = .8;
     plot_3d_with_inc(map, 0.0, 2*M_PI, 0,2*M_PI, sphere, mat, rgb,0.005,0.005) ;
 
+    //--------------------------------------------------------
+    // sphere3
+    D3d_make_identity(mat); D3d_make_identity(imat);
+    Tn = 0 ;
+
+    Ttypelist[Tn] = TX ; Tvlist[Tn] =       -2 ; Tn++ ;
+    Ttypelist[Tn] = TZ ; Tvlist[Tn] = -2*sqrt(3) ; Tn++ ;
+    D3d_make_movement_sequence_matrix (mat,imat,
+                                       Tn,
+                                       Ttypelist,
+                                       Tvlist) ;
+    rgb[0] = .5; rgb[1] = .5; rgb[2] = .8;
+    plot_3d_with_inc(map, 0.0, 2*M_PI, 0,2*M_PI, sphere, mat, rgb,0.005,0.005) ;
+
+    //--------------------------------------------------------
+    // sphere4
+    D3d_make_identity(mat); D3d_make_identity(imat);
+    Tn = 0 ;
+
+    Ttypelist[Tn] = TY ; Tvlist[Tn] = 2*sqrt(3); Tn++ ;
+    Ttypelist[Tn] = TX ; Tvlist[Tn] = 0; Tn++ ;
+    D3d_make_movement_sequence_matrix (mat,imat,
+                                       Tn,
+                                       Ttypelist,
+                                       Tvlist) ;
+    rgb[0] = .5; rgb[1] = .5; rgb[2] = .8;
+    plot_3d_with_inc(map, 0.0, 2*M_PI, 0,2*M_PI, sphere, mat, rgb,0.005,0.005) ;
     //--------------------------------------------------------
     // hyperboloid
     Tn=0;
@@ -276,10 +302,12 @@ int main()
                                        Ttypelist,
                                        Tvlist);
     rgb[0] = 0; rgb[1] = 1; rgb[2] = 1;
-    double v = M_PI/2 - 0.65;
-    plot_3d_with_inc(map, -v, v, 0, 2*M_PI, hyperboloid, mat, rgb,0.002,0.002);
+    plot_3d_with_inc(map, -3*M_PI/10, 3*M_PI/10, 0, 2*M_PI, hyperboloid, mat, rgb,0.002,0.002);
 
     xwd_map_to_named_xwd_file(map, filename);
+    if(i>60) {break;}
   }
+
+  printf("\a"); //play a sound so i know when it's done
   return 1;
 }
