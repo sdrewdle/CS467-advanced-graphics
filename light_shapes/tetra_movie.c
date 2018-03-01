@@ -78,9 +78,10 @@ void checker(double rgb1[3], double rgb2[3],
              double sum, double intensity, double u, double v,
              double rgb[3])
 {
+  v += M_PI/2;
   double ratio, r, g, b;
-  if((int)(u*100/20) % 2 == 0) {
-    if((int)(v*100/20) % 2 == 0){
+  if((int)(u*100/30) % 2 == 0) {
+    if((int)(v*100/30) % 2 == 0){
       r = rgb1[0]; g = rgb1[1]; b = rgb1[2];
     } else {
       r = rgb2[0]; g = rgb2[1]; b = rgb2[2];
@@ -247,7 +248,7 @@ int main()
                                        Ttypelist,
                                        Tvlist) ;
     rgb[0] = .1; rgb[1] = .6; rgb[2] = .3;
-    plot_3d_with_inc(map,0.0, 2*M_PI, 0,2*M_PI, sphere, mat, rgb,0.005,0.005);
+    plot_3d_with_inc(map, 0, 2*M_PI, -M_PI/2, M_PI/2,sphere, mat, rgb,0.005,0.005);
   
     //---------------------------------------------------------
     // sphere2
@@ -261,7 +262,7 @@ int main()
                                        Ttypelist,
                                        Tvlist) ;
     rgb[0] = .5; rgb[1] = .5; rgb[2] = .8;
-    plot_3d_with_inc(map, 0.0, 2*M_PI, 0,2*M_PI, sphere, mat, rgb,0.005,0.005) ;
+    plot_3d_with_inc(map, 0, 2*M_PI, -M_PI/2, M_PI/2,sphere, mat, rgb,0.005,0.005);
 
     //--------------------------------------------------------
     // sphere3
@@ -275,7 +276,7 @@ int main()
                                        Ttypelist,
                                        Tvlist) ;
     rgb[0] = .5; rgb[1] = .5; rgb[2] = .8;
-    plot_3d_with_inc(map, 0.0, 2*M_PI, 0,2*M_PI, sphere, mat, rgb,0.005,0.005) ;
+    plot_3d_with_inc(map, 0, 2*M_PI, -M_PI/2, M_PI/2,sphere, mat, rgb,0.005,0.005);
 
     //--------------------------------------------------------
     // sphere4
@@ -289,7 +290,7 @@ int main()
                                        Ttypelist,
                                        Tvlist) ;
     rgb[0] = .5; rgb[1] = .5; rgb[2] = .8;
-    plot_3d_with_inc(map, 0.0, 2*M_PI, 0,2*M_PI, sphere, mat, rgb,0.005,0.005) ;
+    plot_3d_with_inc(map, 0, 2*M_PI, -M_PI/2, M_PI/2,sphere, mat, rgb,0.005,0.005);
     //--------------------------------------------------------
     // hyperboloid
     Tn=0;
@@ -305,9 +306,9 @@ int main()
     plot_3d_with_inc(map, -3*M_PI/10, 3*M_PI/10, 0, 2*M_PI, hyperboloid, mat, rgb,0.002,0.002);
 
     xwd_map_to_named_xwd_file(map, filename);
-    if(i>60) {break;}
+    if(i>30) {break;}
   }
 
-  printf("\a"); //play a sound so i know when it's done
+  printf("\a"); //play a sound so I know when it's done
   return 1;
 }
