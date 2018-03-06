@@ -163,8 +163,8 @@ void light(double u, double v, double mat[4][4],
   }
 
   //calculate correct rgb value and call G_rgb to set
-  double black[3] = {0,0,0};
-  checker(RGB,black,AMBIENT+DIFFUSE_MAX, AMBIENT + diffuse + specular, u, v, rgb);
+  double white[3] = {1,1,1};
+  checker(RGB,white,AMBIENT+DIFFUSE_MAX, AMBIENT + diffuse + specular, u, v, rgb);
 }
 
 int plot_3d_with_inc (int map, double ulo, double uhi, double vlo, double vhi,
@@ -228,8 +228,9 @@ int main()
 
     //---------------------------------------------------------
     // view moves along circular path in x,z plane y=2.5
-    eye[0] = 10*cos(u);
-    eye[2] = 10*sin(u);
+    eye[0] = 15*cos(u);
+    eye[1] = 3*cos(4*u) + 4;
+    eye[2] = 15*sin(u);
     up[0] = eye[0];
     up[1] = eye[1] + 1;
     up[2] = eye[2];
@@ -283,8 +284,7 @@ int main()
     D3d_make_identity(mat); D3d_make_identity(imat);
     Tn = 0 ;
 
-    Ttypelist[Tn] = TY ; Tvlist[Tn] = 2*sqrt(3); Tn++ ;
-    Ttypelist[Tn] = TX ; Tvlist[Tn] = 0; Tn++ ;
+    Ttypelist[Tn] = TY ; Tvlist[Tn] = 4*sqrt(2); Tn++ ;
     D3d_make_movement_sequence_matrix (mat,imat,
                                        Tn,
                                        Ttypelist,
@@ -292,21 +292,76 @@ int main()
     rgb[0] = .5; rgb[1] = .5; rgb[2] = .8;
     plot_3d_with_inc(map, 0, 2*M_PI, -M_PI/2, M_PI/2,sphere, mat, rgb,0.005,0.005);
     //--------------------------------------------------------
-    // hyperboloid
+    // hyperboloid 1
     Tn=0;
-    Ttypelist[Tn] = RX; Tvlist[Tn] = 90; Tn++;
-    Ttypelist[Tn] = SY; Tvlist[Tn] = 2;  Tn++;
-    Ttypelist[Tn] = SX; Tvlist[Tn] = 0.7; Tn++;
-    Ttypelist[Tn] = SZ; Tvlist[Tn] = 0.7; Tn++;
+    Ttypelist[Tn] = SY; Tvlist[Tn] = 0.5;  Tn++;
+    Ttypelist[Tn] = SX; Tvlist[Tn] = 0.5; Tn++;
+    Ttypelist[Tn] = SZ; Tvlist[Tn] = 2; Tn++;
+    Ttypelist[Tn] = TX; Tvlist[Tn] = -2; Tn++;
     D3d_make_movement_sequence_matrix (mat, imat,
                                        Tn,
                                        Ttypelist,
                                        Tvlist);
     rgb[0] = 0; rgb[1] = 1; rgb[2] = 1;
     plot_3d_with_inc(map, -3*M_PI/10, 3*M_PI/10, 0, 2*M_PI, hyperboloid, mat, rgb,0.002,0.002);
+    //--------------------------------------------------------
+    // hyperboloid 2
+    Tn=0;
+    Ttypelist[Tn] = SY; Tvlist[Tn] =  0.5;  Tn++;
+    Ttypelist[Tn] = SX; Tvlist[Tn] =  0.5; Tn++;
+    Ttypelist[Tn] = SZ; Tvlist[Tn] =    2; Tn++;
+    Ttypelist[Tn] = RY; Tvlist[Tn] =   60; Tn++;
+    Ttypelist[Tn] = TX; Tvlist[Tn] =    1; Tn++;
+    Ttypelist[Tn] = TZ; Tvlist[Tn] = -2*sqrt(3) + sqrt(3); Tn++;
+    D3d_make_movement_sequence_matrix (mat, imat,
+                                       Tn,
+                                       Ttypelist,
+                                       Tvlist);
+    rgb[0] = 0; rgb[1] = 1; rgb[2] = 1;
+    plot_3d_with_inc(map, -3*M_PI/10, 3*M_PI/10, 0, 2*M_PI, hyperboloid, mat, rgb,0.002,0.002);
+    //--------------------------------------------------------
+    // hyperboloid 3
+    Tn=0;
+    Ttypelist[Tn] = SY; Tvlist[Tn] =  0.5;  Tn++;
+    Ttypelist[Tn] = SX; Tvlist[Tn] =  0.5; Tn++;
+    Ttypelist[Tn] = SZ; Tvlist[Tn] =    2; Tn++;
+    Ttypelist[Tn] = RY; Tvlist[Tn] =  -60; Tn++;
+    Ttypelist[Tn] = TX; Tvlist[Tn] =    1; Tn++;
+    Ttypelist[Tn] = TZ; Tvlist[Tn] =  2*sqrt(3) - sqrt(3); Tn++;
+    D3d_make_movement_sequence_matrix (mat, imat,
+                                       Tn,
+                                       Ttypelist,
+                                       Tvlist);
+    rgb[0] = 0; rgb[1] = 1; rgb[2] = 1;
+    plot_3d_with_inc(map, -3*M_PI/10, 3*M_PI/10, 0, 2*M_PI, hyperboloid, mat, rgb,0.002,0.002);
+    //--------------------------------------------------------
+    // hyperboloid 4
+    Tn=0;
+    Ttypelist[Tn] = SY; Tvlist[Tn] =  0.5;  Tn++;
+    Ttypelist[Tn] = SX; Tvlist[Tn] =  0.5; Tn++;
+    Ttypelist[Tn] = SZ; Tvlist[Tn] =    2; Tn++;
+    Ttypelist[Tn] = RX; Tvlist[Tn] =   90; Tn++;
+    Ttypelist[Tn] = RZ; Tvlist[Tn] =   35; Tn++;
+    Ttypelist[Tn] = TX; Tvlist[Tn] =    2; Tn++;
+    Ttypelist[Tn] = TY; Tvlist[Tn] = 2*sqrt(2); Tn++;
+    D3d_make_movement_sequence_matrix (mat, imat,
+                                       Tn,
+                                       Ttypelist,
+                                       Tvlist);
+    rgb[0] = 0; rgb[1] = 1; rgb[2] = 1;
+    plot_3d_with_inc(map, -3*M_PI/10, 3*M_PI/10, 0, 2*M_PI, hyperboloid, mat, rgb,0.002,0.002);
+    //--------------------------------------------------------
+    // hyperboloid 5
+    D3d_rotate_y(mat, imat, 2*M_PI/3);
+    rgb[0] = 0; rgb[1] = 1; rgb[2] = 1;
+    plot_3d_with_inc(map, -3*M_PI/10, 3*M_PI/10, 0, 2*M_PI, hyperboloid, mat, rgb,0.002,0.002);
+    //--------------------------------------------------------
+    // hyperboloid 6
+    D3d_rotate_y(mat,imat,2*M_PI/3);
+    rgb[0] = 0; rgb[1] = 1; rgb[2] = 1;
+    plot_3d_with_inc(map, -3*M_PI/10, 3*M_PI/10, 0, 2*M_PI, hyperboloid, mat, rgb,0.002,0.002);
 
     xwd_map_to_named_xwd_file(map, filename);
-    if(i>30) {break;}
   }
 
   printf("\a"); //play a sound so I know when it's done
