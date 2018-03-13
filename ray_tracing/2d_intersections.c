@@ -1,7 +1,7 @@
 #include <FPT.h>
 #include <D3d_matrix.h>
 
-#define BG 0.1
+#define BG 0.18
 #define X 0
 #define Y 1
 
@@ -16,20 +16,20 @@ double sgn(double v)
 
 void gather_points(double p1[2], double p2[2]) {
   G_wait_click(p1);
-  if(p1[0]<=5 && p1[1]<=5){exit(1);}
+  if(p1[X]<=5 && p1[Y]<=5){exit(1);}
   G_rgb(.7,.8,.9);
-  G_fill_circle(p1[0],p1[1],2);
+  G_fill_circle(p1[X],p1[Y],2);
 
   G_wait_click(p2);
-  if(p2[0]<=5 && p2[1]<=5){exit(1);}
-  G_fill_circle(p2[0],p2[1],2);
+  if(p2[X]<=5 && p2[Y]<=5){exit(1);}
+  G_fill_circle(p2[X],p2[Y],2);
 }
 
 // circle :   x^2 + y^2 = 1
 int f1 (double u, double xy[2])
 {
-  xy[0] = cos(u) ;  
-  xy[1] = sin(u) ;
+  xy[X] = cos(u) ;  
+  xy[Y] = sin(u) ;
   return 1;
 }
 
@@ -42,9 +42,9 @@ int plot (double ulo, double uhi,
 
   for (u = ulo ; u <= uhi ; u += 0.01) {
     func(u, twovals) ;
-    p[0] = twovals[0] ; p[1] = twovals[1] ; p[2] = 0 ;
+    p[X] = twovals[0] ; p[Y] = twovals[Y] ; p[2] = 0 ;
     D3d_mat_mult_pt(p,mat,p) ;
-    G_point(p[0],p[1]) ;
+    G_point(p[X],p[Y]) ;
   }
   return 1;
 }
@@ -55,12 +55,12 @@ void draw_circles(double m[9][4][4], int mn) {
   int i;
   G_rgb(0,1,1);
   for(i=0; i<mn; i++) {
-    c[0] = 0; c[1] = 0; c[2] = 0;
+    c[X] = 0; c[Y] = 0; c[2] = 0;
     plot(0,2*M_PI, f1, m[i]);
     D3d_mat_mult_pt(c,m[i],c);
 
     sprintf(num, "%d", i);
-    G_draw_string(num,c[0]-6,c[1]-6);
+    G_draw_string(num,c[X]-6,c[Y]-6);
   }
 }
 
@@ -68,24 +68,20 @@ void compute_best_intersection(double mat[9][4][4], double imat[9][4][4],
                                double p1[3], double p2[3],
                                double ui[2]) {
   double slope, inter, a, b, c, pos[3], neg[3], ltemp;
-  double pa[3]; // = {p1[0], p1[1], 0};
-  double pb[3]; // = {p2[0], p2[1], 0};
+  double pa[3];
+  double pb[3];
 
   ui[1] = -1;
   double shortest_length = 10000;
   int i;
 
   for(i=0;i<MN; i++) {
-    //p1[0] = P1[0]; p1[1] = P1[1]; p1[2] = P1[2];
-    //p2[0] = P2[0]; p2[1] = P2[1]; p2[2] = P2[2];
-
-
     D3d_mat_mult_pt(pa,imat[i],p1);
     D3d_mat_mult_pt(pb,imat[i],p2);
 
     // finding equation of the line y=mx+b
-    slope = (pb[1]-pa[1]) / (pb[0]-pa[0]);
-    inter = pa[1]  - slope*pa[0];
+    slope = (pb[Y]-pa[Y]) / (pb[X]-pa[X]);
+    inter = pa[Y]  - slope*pa[X];
 
     // finding parameters of quadratic equation
     a = slope*slope + 1;
@@ -93,30 +89,30 @@ void compute_best_intersection(double mat[9][4][4], double imat[9][4][4],
     c = inter*inter - 1;
 
     // solving quadratic equation
-    pos[0] = (-b + sqrt(b*b - 4*a*c)) / (2 * a);
-    neg[0] = (-b - sqrt(b*b - 4*a*c)) / (2 * a);
+    pos[X] = (-b + sqrt(b*b - 4*a*c)) / (2 * a);
+    neg[X] = (-b - sqrt(b*b - 4*a*c)) / (2 * a);
     //check for nan
     if(isnan(pos[0]) && isnan(neg[0])){continue;}
 
-    pos[1] = slope * pos[0] + inter;
-    neg[1] = slope * neg[0] + inter;
+    pos[Y] = slope * pos[X] + inter;
+    neg[Y] = slope * neg[X] + inter;
 
 
     // back in normal view 
     D3d_mat_mult_pt(pos,mat[i],pos);
     D3d_mat_mult_pt(neg,mat[i],neg);
 
-    ltemp = sqrt(pow(pos[0]-p2[0],2) + pow(pos[1]-p2[1],2));
+    ltemp = sqrt(pow(pos[X]-p2[X],2) + pow(pos[Y]-p2[Y],2));
     if(ltemp < shortest_length){
       D3d_mat_mult_pt(pos,imat[i],pos);
-      ui[0] = atan2(pos[1],pos[0]);
+      ui[0] = atan2(pos[Y],pos[X]);
       ui[1] = i;
       shortest_length = ltemp;
 
       D3d_mat_mult_pt(pos,mat[i],pos);
     }
 
-    ltemp = sqrt(pow(neg[0]-p2[0],2) + pow(neg[1]-p2[1],2));
+    ltemp = sqrt(pow(neg[X]-p2[X],2) + pow(neg[Y]-p2[Y],2));
     if (ltemp < shortest_length){
       D3d_mat_mult_pt(neg,imat[i],neg);
       ui[0] = atan2(neg[1],neg[0]);
@@ -129,6 +125,24 @@ void compute_best_intersection(double mat[9][4][4], double imat[9][4][4],
   }
 }
 
+void draw_normal(double u,
+            int (*func)(double u, double xy[2]),
+            double mat[4][4]) {
+  double adj[3];
+  double ci[3];
+  func(u+0.001,adj);
+  func(u,ci);
+
+  D3d_mat_mult_pt(adj,mat,adj);
+  D3d_mat_mult_pt(ci,mat,ci);
+
+  G_rgb(1,.4,1);
+  G_line(ci[X],ci[Y],
+         ci[X] + 2000*(adj[Y] - ci[Y]),
+         ci[Y] - 2000*(adj[X] - ci[X])
+         );
+}
+
 int main()
 {
   int Tn, Ttypelist[100] ;
@@ -137,7 +151,7 @@ int main()
   double mat[9][4][4],imat[9][4][4] ;
 
   G_init_graphics(800,800) ;
-  G_rgb(0.1, 0.1, 0.1) ;
+  G_rgb(BG,BG,BG) ;
   G_clear() ;
 
   //---------------------------------------------------------
@@ -212,7 +226,6 @@ int main()
   double p1[3], p2[3],
     ui_pair[2] = {0,0},
     ci[3], //current intersection
-    adj[3], // point adjacent to uth
     u;
 
   int i;
@@ -234,20 +247,12 @@ int main()
     ci[Y] = sin(u);
     D3d_mat_mult_pt(ci,mat[i],ci);
 
+    // draw line to intersection point
     G_rgb(1,1,1);
     G_line(p1[X],p1[Y], ci[X], ci[Y]);
 
-    f1(u+0.001,adj);
-    D3d_mat_mult_pt(adj,mat[i],adj);
-
-    G_rgb(1,.4,1);
-    G_line(ci[X],ci[Y],
-           ci[X] + 2000*(adj[Y] - ci[Y]),
-           ci[Y] - 2000*(adj[X] - ci[X])
-           );
+    //draw normal line
+    draw_normal(u,f1,mat[i]);
   }
   return 1;
 }
-
-
-
