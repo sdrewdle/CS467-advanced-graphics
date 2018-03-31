@@ -111,8 +111,9 @@ void compute_best_intersection(double mat[9][4][4], double imat[9][4][4],
     D3d_mat_mult_pt(pos,mat[i],pos);
     D3d_mat_mult_pt(neg,mat[i],neg);
 
+    //test for pos being the shortest
     ltemp = sqrt(pow(pos[X]-p2[X],2) + pow(pos[Y]-p2[Y],2));
-    if(ltemp < shortest_length){
+    if(ltemp < shortest_length && tp >= 0){
       D3d_mat_mult_pt(pos,imat[i],pos);
       ui[0] = atan2(pos[Y],pos[X]);
       ui[1] = i;
@@ -121,8 +122,9 @@ void compute_best_intersection(double mat[9][4][4], double imat[9][4][4],
       D3d_mat_mult_pt(pos,mat[i],pos);
     }
 
+    //test for neg being the shortest
     ltemp = sqrt(pow(neg[X]-p2[X],2) + pow(neg[Y]-p2[Y],2));
-    if (ltemp < shortest_length){
+    if (ltemp < shortest_length && tn >= 0){
       D3d_mat_mult_pt(neg,imat[i],neg);
       ui[0] = atan2(neg[1],neg[0]);
       ui[1] = i;
