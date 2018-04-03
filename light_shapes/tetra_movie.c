@@ -4,7 +4,6 @@
 #include <xwd_tools.h>
 //--------------------------------------------general display variables:
 double half_angle = 25 *M_PI/180;
-double hither = .1, yon = 10, view_window[6][4];   //not implemented yet
 #define WW  800
 #define WH  800
 

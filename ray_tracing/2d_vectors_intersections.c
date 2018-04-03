@@ -3,7 +3,7 @@
 
 #define BG 0.18
 #define X 0
-#define Y 1    
+#define Y 1
 
 int MN;
 
