@@ -15,7 +15,69 @@ instead of (x',y',z',1) = (x,y,z,1) * M
 */
 
 
+//-----------------------------------------------------------------------
+// my functions
+//-----------------------------------------------------------------------
+void normalize(double *v, int l) {
+  int i;
+  double length = 0;
+  for(int i=0; i<l;i++) {
+    length += v[i]*v[i];
+  } length = sqrt(length);
+  for(int i=0;i<l;i++) {
+    v[i] /= length;
+  }
+}
 
+void vector_to_pts(double x1, double y1, double z1,
+                   double x2, double y2, double z2,
+                   double v[3]){
+  //create a vector from p2 to p1
+  v[2] = z2-z1;
+  v[1] = y2-y1;
+  v[0] = x2-x1;
+}
+
+
+double dot(double a[3], double b[3]) {
+  int i;
+  double prod = 0;
+  for(i=0;i<3;i++) {
+    prod += a[i] * b[i];
+  }
+  return prod;
+}
+void vector_to(double a[3], double b[3], double v[3]) {
+  int i;
+  for(i=0;i<3;i++) {v[i] = a[i]-b[i];}
+}
+
+void orthogonal(double u[3], double v[3], double orthog[3]){
+  double t[3];
+  D3d_x_product(t,u,v);
+
+  orthog[0] = 0 - t[0];
+  orthog[1] = 0 - t[1];
+  orthog[2] = 0 - t[2];
+}
+void normal_pts(double x1, double y1, double z1,
+                double x2, double y2, double z2,
+                double x3, double y3, double z3, double n[3]) {
+  double u[3], v[3];
+  vector_to_pts(x1,y1,z1, x2,y2,z2, u);
+  vector_to_pts(x3,y3,z3, x2,y2,z2, v);
+  orthogonal(u,v, n);
+  normalize(n,3);
+}
+void normal(double a[3], double b[3], double c[3], double n[3]) {
+  double u[3], v[3];
+  vector_to(a,b,u);
+  vector_to(c,b,v);
+  orthogonal(u,v,n);
+  normalize(n,3);
+}
+//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 
 int D3d_print_mat (double a[4][4])
 {
@@ -29,9 +91,6 @@ int D3d_print_mat (double a[4][4])
 
   return 1 ;
 } 
-
-
-
 
 int D3d_copy_mat (double a[4][4], double b[4][4])
 // a = b
@@ -505,7 +564,7 @@ int D3d_view (double view[4][4],  double vinv[4][4],
 // of the eye, the center of interest, and an up point.
 // return 1 if successful, 0 otherwise.
   
-  D3d_make_identity(view); D3d_make_identity(vinv);
+  //D3d_make_identity(view); D3d_make_identity(vinv);
   
   D3d_translate(view, vinv, -eye[0], -eye[1], -eye[2]);
   D3d_mat_mult_pt(coi,view,coi);
@@ -520,6 +579,7 @@ int D3d_view (double view[4][4],  double vinv[4][4],
   D3d_mat_mult_pt(up,view,up);
 
   double x = up[0], y=up[1];
-  h=sqrt(x*x + y*y);
+  h = sqrt(x*x + y*y);
   D3d_cs_rotate_z(view,vinv,y/h,x/h);
+  return 1;
 }
