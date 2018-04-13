@@ -151,22 +151,6 @@ void reflection(double l[3], double n[3], double r[3]) {
   normalize(r,3);
 }
 
-void shade(double rgb[3], double sum, double intensity,
-           double fin[3]) {
-  double ratio;
-  int i;
-  if (intensity <= sum) {
-    ratio = intensity/sum;
-    for(i=0;i<3;i++) {
-      fin[i] = rgb[i]*ratio;
-    }
-  } else {
-    ratio = (intensity-sum)/(1-sum);
-    for(i=0;i<3;i++){
-      fin[i] = (1-ratio)*rgb[i] + ratio;
-    }
-  }
-}
 void compute_best_intersection(double mat[MMN][4][4], double imat[MMN][4][4],
                                int *shape,
                                double p1[3], double p2[3],
