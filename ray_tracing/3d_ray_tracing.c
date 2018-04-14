@@ -225,6 +225,18 @@ void compute_best_intersection(double mat[MMN][4][4], double imat[MMN][4][4],
     }
   }
 }
+void compute_norm_obj_space(double xyz_obj[3], double imat[4][4], int shape, double norm[3]) {
+  double par[3] = {2*xyz_obj[X], 2*xyz_obj[Y], 2*xyz_obj[Z]};
+  if(shape == HYPERB) {par[1] = -par[1];}
+  norm[0] = imat[0][0]*par[X] + imat[1][0]*par[Y] + imat[2][0]*par[Z];
+  norm[1] = imat[0][1]*par[X] + imat[1][1]*par[Y] + imat[2][1]*par[Z];
+  norm[2] = imat[0][2]*par[X] + imat[1][2]*par[Y] + imat[2][2]*par[Z];
+}
+void compute_norm_eye_space(double xyz[3], double imat[4][4], int shape, double norm[3]) {
+  double xyz_obj[3];
+  D3d_mat_mult_pt(xyz_obj, imat, xyz);
+  compute_norm_obj_space(xyz_obj,imat,shape,norm);
+}
 
 int plot (int map, int *shape,
           double mat[MMN][4][4], double imat[MMN][4][4],
@@ -254,15 +266,8 @@ int plot (int map, int *shape,
 
       obj = xyzi[3];
 
-      //compute partial derivative:
-      double xyz_obj[3]; //xyz in object space
-      D3d_mat_mult_pt(xyz_obj, imat[obj], xyzi);
+      compute_norm_eye_space(xyzi,imat[obj],shape[obj], norm);
 
-      double par[3] = {2*xyz_obj[X], 2*xyz_obj[Y], 2*xyz_obj[Z]};
-      if(shape[obj] == HYPERB) {par[1] = -par[1];}
-      norm[0] = imat[obj][0][0]*par[X] + imat[obj][1][0]*par[Y] + imat[obj][2][0]*par[Z];
-      norm[1] = imat[obj][0][1]*par[X] + imat[obj][1][1]*par[Y] + imat[obj][2][1]*par[Z];
-      norm[2] = imat[obj][0][2]*par[X] + imat[obj][1][2]*par[Y] + imat[obj][2][2]*par[Z];
       Light_Model(base_rgb[obj],origin,xyzi,norm,shade);
 
       set_xwd_map_color(map, i, j, shade[0], shade[1], shade[2]);
