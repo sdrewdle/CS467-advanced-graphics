@@ -6,7 +6,7 @@ double half_angle = 25 *M_PI/180;
 #define WW  800
 #define WH  800
 
-#define BG 0.18
+#define BG 0.6
 #define X 0
 #define Y 1
 #define Z 2
@@ -23,8 +23,14 @@ int MN = 0;
 
 double eye[3], ls[3];
 double coi[3], up[3];
-double VIEW[4][4], iVIEW[4][4];
 double light_in_eye_space[3];
+double VIEW[4][4], iVIEW[4][4];
+
+//------------------------------------------------------to track shapes
+int shape[MMN];
+double mat[MMN][4][4],  imat[MMN][4][4];
+double base_rgb[MMN][3];
+double reflectivity[MMN];
 
 // scale: used for translating 3d --> 2d screen
 void scale(double *v, double scale, int l) {
@@ -34,6 +40,19 @@ void scale(double *v, double scale, int l) {
   }
 }
 
+void deep_copy(double a[MMN][4][4], double b[MMN][4][4]) {
+  /**
+   * copy a into b
+   **/
+  int i,j,k;
+  for(i=0;i<MMN;i++){
+    for(j=0;j<4;j++){
+      for(k=0;k<4;k++){
+        b[i][j][k] = a[i][j][k];
+      }
+    }
+  }
+}
 
 int Light_Model (double irgb[3],
                  double s[3],
@@ -59,18 +78,18 @@ int Light_Model (double irgb[3],
   N[0] = n[0]/len ;  N[1] = n[1]/len ;  N[2] = n[2]/len ;
 
   double E[3] ;
-  E[0] = s[0] - p[0] ; 
-  E[1] = s[1] - p[1] ; 
-  E[2] = s[2] - p[2] ; 
+  E[0] = s[0] - p[0] ;
+  E[1] = s[1] - p[1] ;
+  E[2] = s[2] - p[2] ;
   len = sqrt(E[0]*E[0] + E[1]*E[1] + E[2]*E[2]) ;
   if (len == 0) return 0 ;
   E[0] /= len ;  E[1] /= len ;  E[2] /= len ;
   double NdotE = N[0]*E[0] + N[1]*E[1] + N[2]*E[2] ;
 
   double L[3] ;
-  L[0] = light_in_eye_space[0] - p[0] ; 
-  L[1] = light_in_eye_space[1] - p[1] ; 
-  L[2] = light_in_eye_space[2] - p[2] ; 
+  L[0] = light_in_eye_space[0] - p[0] ;
+  L[1] = light_in_eye_space[1] - p[1] ;
+  L[2] = light_in_eye_space[2] - p[2] ;
   len = sqrt(L[0]*L[0] + L[1]*L[1] + L[2]*L[2]) ;
   if (len == 0) return 0 ;
   L[0] /= len ;  L[1] /= len ;  L[2] /= len ;
@@ -151,9 +170,7 @@ void reflection(double l[3], double n[3], double r[3]) {
   normalize(r,3);
 }
 
-void compute_best_intersection(double mat[MMN][4][4], double imat[MMN][4][4],
-                               int *shape,
-                               double p1[3], double p2[3],
+void compute_best_intersection(double p1[3], double p2[3],
                                double xyzi[4]) {
   double a, b, c; // variables of quadratic equation
   double pos[3], neg[3], ltemp;
@@ -201,7 +218,7 @@ void compute_best_intersection(double mat[MMN][4][4], double imat[MMN][4][4],
                                     // but won't mess up spheres
       //test for pos being the shortest
       ltemp = tp;
-      if(ltemp < shortest_length && tp >= 0){ //if shortest and t is positive
+      if(ltemp < shortest_length && tp >= 0.1){ //if shortest and t is positive
         D3d_mat_mult_pt(pos,mat[i],pos);
         xyzi[0] = pos[X];
         xyzi[1] = pos[Y];
@@ -214,7 +231,7 @@ void compute_best_intersection(double mat[MMN][4][4], double imat[MMN][4][4],
     //test for neg being the shortest
     if(neg[Y] < 1.5 && neg[Y] > -1.5) { // still only necessary for hyperboloids
       ltemp = tn;
-      if (ltemp < shortest_length && tn >= 0){ // if shortest and t is positive
+      if (ltemp < shortest_length && tn >= 0.1){ // if shortest and t is positive
         D3d_mat_mult_pt(neg,mat[i],neg);
         xyzi[0] = neg[X];
         xyzi[1] = neg[Y];
@@ -238,11 +255,48 @@ void compute_norm_eye_space(double xyz[3], double imat[4][4], int shape, double 
   compute_norm_obj_space(xyz_obj,imat,shape,norm);
 }
 
-int plot (int map, int *shape,
-          double mat[MMN][4][4], double imat[MMN][4][4],
-          double base_rgb[5][3]
-	 )
+void recursive_shading(double p1[3], double p2[3], int depth, double shade[3])
 {
+  int i;
+  double xyzi[4], norm[3];
+  double v[4][4], iv[4][4];
+  double imat_view[4][4];
+  double new_up[3];
+
+  compute_best_intersection(p1,p2, xyzi);
+  int obj = xyzi[3];
+  if(xyzi[3] == -1){
+    for(i=0;i<3;i++){shade[i] = BG;} //set to background color
+    return;
+  }
+
+  new_up[0] = xyzi[0]; new_up[1] = xyzi[1] + 1; new_up[2] = xyzi[2];
+
+  compute_norm_eye_space(xyzi,imat[obj],shape[obj], norm);
+  double tshade[3];
+  Light_Model(base_rgb[obj],p1,xyzi,norm,tshade);
+
+  if(depth >= 10 || reflectivity[obj] == 0) {
+    for(i=0;i<3;i++){shade[i] = tshade[i];}
+    return;
+  }
+
+  double rv[3];
+  vector_to(p1,p2,rv);
+  reflection(rv,norm,rv);
+
+  double p3[3] = {xyzi[X] + rv[X], xyzi[Y] + rv[Y], xyzi[Z] + rv[Z]};
+  recursive_shading(xyzi,p3, depth+1, shade);
+
+  //rudi-blend-tary
+  double r = reflectivity[obj];
+  for(i = 0; i<3; i++) {
+    tshade[i] = r*shade[i] + (1-r)*tshade[i];
+  }
+  Light_Model(tshade,p1,xyzi,norm,shade);
+}
+
+int plot (int map){
   int p[2];
   double screen[3] = {0,0,1};
   double xyz[3] = {0,0,0};
@@ -258,19 +312,10 @@ int plot (int map, int *shape,
       screen[Y] = -th + j * (2*th) / WH;
       screen[Z] = 1;
 
-      compute_best_intersection(mat, imat, shape, origin, screen, xyzi);
-      if(xyzi[3] == -1) {
-        set_xwd_map_color(map,i,j,BG,BG,BG); // set pixel to background color
-        continue;
-      }
-
-      obj = xyzi[3];
-
-      compute_norm_eye_space(xyzi,imat[obj],shape[obj], norm);
-
-      Light_Model(base_rgb[obj],origin,xyzi,norm,shade);
+      recursive_shading(origin,screen, 0,shade);
 
       set_xwd_map_color(map, i, j, shade[0], shade[1], shade[2]);
+   
     }
   }
   return 1;
@@ -285,10 +330,6 @@ int main()
   map = create_new_xwd_map(WW,WH);
   xwd_map_to_named_xwd_file(map,filename);
 
-
-  double mat[MMN][4][4],imat[MMN][4][4] ;
-  int shape[MMN];
-  double reflectivity[MMN];
   //---------------------------------------------------------
   // create VIEW matrix
   eye[0] = 4;
@@ -319,7 +360,8 @@ int main()
                                      Tn,
                                      Ttypelist,
                                      Tvlist) ;
-  reflectivity[MN] = 0;
+  base_rgb[MN][0] = 1; base_rgb[MN][1] = 0.7; base_rgb[MN][2] = 1;
+  reflectivity[MN] = 0.8;
   shape[MN] = HYPERB; MN++;
   //---------------------------------------------------------
   // sphere1
@@ -331,7 +373,8 @@ int main()
                                      Tn,
                                      Ttypelist,
                                      Tvlist) ;
-  reflectivity[MN] = 1;
+  base_rgb[MN][0] = 1; base_rgb[MN][1] = 1; base_rgb[MN][2] = 0.5;
+  reflectivity[MN] = 0.8;
   shape[MN] = SPHERE; MN++;
 
   int i;
@@ -340,13 +383,7 @@ int main()
     D3d_mat_mult(imat[i], iVIEW,imat[i]);
   }
 
-  double rgb[5][3] = {{1,1,0.5},
-                      {0.5,0.1,0.6},
-                      {1,0,0},
-                      {0,1,0},
-                      {0,0,1}};
-
-  plot(map,shape,mat,imat,rgb);
+  plot(map);
   xwd_map_to_named_xwd_file(map, filename);
 
   return 1;
