@@ -6,7 +6,7 @@ double half_angle = 25 *M_PI/180;
 #define WW  800
 #define WH  800
 
-#define BG 0.18
+#define BG 0.9
 #define X 0
 #define Y 1
 #define Z 2
@@ -14,6 +14,8 @@ double half_angle = 25 *M_PI/180;
 #define SPHERE 0
 #define HYPERB 1
 #define PLANE  2
+
+#define GLASS 1.458
 
 #define MMN 20 //maximum number of shapes
 int MN = 0;
@@ -32,9 +34,11 @@ int shape[MMN];
 double mat[MMN][4][4],  imat[MMN][4][4];
 double base_rgb[MMN][3];
 double reflectivity[MMN];
+double refr_index[MMN];
+double opacity[MMN];
 
 // scale: used for translating 3d --> 2d screen
-void scale(double *v, double scale, int l) {
+void scale(double v[3], double scale, int l) {
   int i;
   for(i=0;i<l;i++) {
     v[i] *= scale;
@@ -275,30 +279,41 @@ void recursive_shading(double p1[3], double p2[3], int depth, double shade[3])
     return;
   }
 
-  new_up[0] = xyzi[0]; new_up[1] = xyzi[1] + 1; new_up[2] = xyzi[2];
-
   compute_norm_eye_space(xyzi,imat[obj],shape[obj], norm);
-  double tshade[3];
-  Light_Model(base_rgb[obj],p1,xyzi,norm,tshade);
 
-  if(depth >= 10 || reflectivity[obj] == 0) {
-    for(i=0;i<3;i++){shade[i] = tshade[i];}
-    return;
+  if(depth >= 10 || (!reflectivity[obj] && opacity[obj])) {
+    for(i=0;i<3;i++){shade[i] = base_rgb[obj][i];}
+    goto LIGHT;
   }
 
-  double rv[3];
-  vector_to(p1,p2,rv);
-  reflection(rv,norm,rv);
+  double r_shade[3] = {1,1,1};
+  if(reflectivity[obj] > 0) {
+    double rv[3];
+    vector_to(p1,p2,rv);
+    reflection(rv,norm,rv);
 
-  double p3[3] = {xyzi[X] + rv[X], xyzi[Y] + rv[Y], xyzi[Z] + rv[Z]};
-  recursive_shading(xyzi,p3, depth+1, shade);
-
-  //rudi-blend-tary
-  double r = reflectivity[obj];
-  for(i = 0; i<3; i++) {
-    tshade[i] = r*shade[i] + (1-r)*tshade[i];
+    double p3[3] = {xyzi[X] + rv[X], xyzi[Y] + rv[Y], xyzi[Z] + rv[Z]};
+    recursive_shading(xyzi,p3, depth+1, r_shade);
   }
-  Light_Model(tshade,p1,xyzi,norm,shade);
+
+  double o_shade[3] = {0,1,0};
+  if(opacity[obj] < 1) { //at this point, snell's law is not in consideration
+    double pn[3] = {xyzi[X] + p2[X] - p1[X],
+                    xyzi[Y] + p2[Y] - p1[Y],
+                    xyzi[Z] + p2[Z] - p1[Z]};
+    recursive_shading(xyzi,pn, depth+1, o_shade);
+  }
+
+  for(i=0;i<3;i++) {
+    shade[i] = reflectivity[obj]*r_shade[i]
+      + (1-reflectivity[obj]*base_rgb[obj][i]);
+  }
+
+ LIGHT: ;
+  Light_Model(shade,p1,xyzi,norm,shade); //set shade to blend of reflected shade and current shade
+  for(i=0;i<3;i++) {
+    shade[i] = opacity[obj]*(shade[i]) + (1-opacity[obj])*o_shade[i];
+  }
 }
 
 int plot (int map){
@@ -356,14 +371,18 @@ int main()
   //---------------------------------------------------------
   // hyperboloid
   Tn = 0 ;
-  Ttypelist[Tn] = TY ; Tvlist[Tn] = -1 ; Tn++;
+  Ttypelist[Tn] = RZ ; Tvlist[Tn] = 30; Tn++;
+  Ttypelist[Tn] = RZ ; Tvlist[Tn] = 30; Tn++;
+  Ttypelist[Tn] = TY ; Tvlist[Tn] = -0.5 ; Tn++;
+  Ttypelist[Tn] = TZ ; Tvlist[Tn] = 2 ; Tn++;
   D3d_make_movement_sequence_matrix (mat[MN],imat[MN],
                                      Tn,
                                      Ttypelist,
                                      Tvlist) ;
   base_rgb[MN][0] = 1; base_rgb[MN][1] = 0.7; base_rgb[MN][2] = 1;
-  reflectivity[MN] = 0.8;
-  shape[MN] = HYPERB; MN++;
+  reflectivity[MN] = .3;
+  shape[MN] = HYPERB;
+  opacity[MN] = 0.5; MN ++;
   //---------------------------------------------------------
   // sphere1
   Tn = 0 ;
@@ -376,23 +395,8 @@ int main()
                                      Tvlist) ;
   base_rgb[MN][0] = 1; base_rgb[MN][1] = 1; base_rgb[MN][2] = 0.5;
   reflectivity[MN] = 0.8;
-  shape[MN] = SPHERE; MN++;
-
-  //---------------------------------------------------------
-  // plane 1
-  Tn = 0 ;
-  Ttypelist[Tn] = SX ; Tvlist[Tn] =  6 ; Tn++ ;
-  Ttypelist[Tn] = SY ; Tvlist[Tn] = 6  ; Tn++ ;
-  Ttypelist[Tn] = SZ ; Tvlist[Tn] = 0.1; Tn++ ;
-  Ttypelist[Tn] = TZ ; Tvlist[Tn] = 20 ; Tn++ ;
-
-  D3d_make_movement_sequence_matrix (mat[MN],imat[MN],
-                                     Tn,
-                                     Ttypelist,
-                                     Tvlist) ;
-  base_rgb[MN][0] = 1; base_rgb[MN][1] = 1; base_rgb[MN][2] = 0.5;
-  reflectivity[MN] = 0.9;
-  shape[MN] = SPHERE;  MN++;
+  shape[MN] = SPHERE;
+  opacity[MN] = 0.5; MN++;
 
   int i;
   for(i = 0; i < MN; i++){
@@ -402,8 +406,8 @@ int main()
 
   i=0;
   double u;
-  char *base = "movie/ref";
-  for(u = 0; u<2*M_PI; u += M_PI/50){
+  char *base = "movie/r";
+  for(u = 0; u<2*M_PI; u += M_PI/20){
     sprintf(filename,"%s%04d.xwd", base, i);
     i+=1;
     map = create_new_xwd_map(WW,WH);
@@ -424,5 +428,6 @@ int main()
     xwd_map_to_named_xwd_file(map, filename);
   }
 
+  printf("\a");
   return 1;
 }
